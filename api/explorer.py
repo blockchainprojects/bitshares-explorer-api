@@ -54,7 +54,7 @@ def _enrich_operation(operation, ws_client):
 def get_operation(operation_id):
     operation = bitshares_ws_client.get_object(operation_id)
     if not operation:
-        operation = {} 
+        operation = {}
 
     operation = _enrich_operation(operation, bitshares_ws_client)
     return [ operation ]
@@ -66,21 +66,21 @@ def get_operation_full(operation_id):
 
     operation = bitshares_ws_full_client.get_object(operation_id)
     if not operation:
-        operation = {} 
+        operation = {}
 
     operation = _enrich_operation(operation, bitshares_ws_full_client)
     return [ operation ]
 
 def get_operation_full_elastic(operation_id):
     res = es_wrapper.get_single_operation(operation_id)
-    operation = { 
+    operation = {
         "op": res[0]["operation_history"]["op_object"],
         "op_type": res[0]["operation_type"],
-        "block_num": res[0]["block_data"]["block_num"], 
+        "block_num": res[0]["block_data"]["block_num"],
         "op_in_trx": res[0]["operation_history"]["op_in_trx"],
-        "result": json.loads(res[0]["operation_history"]["operation_result"]), 
+        "result": json.loads(res[0]["operation_history"]["operation_result"]),
         "trx_in_block": res[0]["operation_history"]["trx_in_block"],
-        "virtual_op": res[0]["operation_history"]["virtual_op"], 
+        "virtual_op": res[0]["operation_history"]["virtual_op"],
         "block_time": res[0]["block_data"]["block_time"],
         "trx_id": res[0]["block_data"]["trx_id"]
     }
@@ -286,7 +286,7 @@ def _ensure_safe_limit(limit):
     return limit
 
 def get_order_book(base, quote, limit=False):
-    limit = _ensure_safe_limit(limit)    
+    limit = _ensure_safe_limit(limit)
     order_book = bitshares_ws_client.request('database', 'get_order_book', [base, quote, limit])
     return order_book
 
@@ -389,9 +389,9 @@ def get_top_proxies():
 
     query = """
         SELECT follower.voting_as, proxy.account_name, proxy.amount, sum(follower.amount), count(1)
-        FROM holders AS follower 
-        LEFT OUTER JOIN holders AS proxy ON proxy.account_id = follower.voting_as 
-        WHERE follower.voting_as<>'1.2.5' 
+        FROM holders AS follower
+        LEFT OUTER JOIN holders AS proxy ON proxy.account_id = follower.voting_as
+        WHERE follower.voting_as<>'1.2.5'
         GROUP BY follower.voting_as, proxy.account_name, proxy.amount
         HAVING count(1) > 2
         """
@@ -405,7 +405,7 @@ def get_top_proxies():
         proxy_amount = proxy_row[2] + proxy_row[3] if proxy_row[2] else proxy_row[3]
         proxy_followers = proxy_row[4]
         proxy_total_percentage = float(float(proxy_amount) * 100.0/ float(total_votes))
-        
+
         proxies.append([proxy_id, proxy_name, proxy_amount, proxy_followers, proxy_total_percentage])
 
     con.close()
@@ -442,7 +442,7 @@ def get_witnesses_votes():
         vote_id =  witness[0]["vote_id"]
         id_witness = witness[0]["id"]
         witness_account_name = witness[0]["witness_account_name"]
-        proxy_votes = _get_formatted_proxy_votes(proxies, vote_id)        
+        proxy_votes = _get_formatted_proxy_votes(proxies, vote_id)
 
         witnesses_votes.append([witness_account_name, id_witness] + proxy_votes)
 
@@ -463,7 +463,7 @@ def get_workers_votes():
         id_worker = worker[0]["id"]
         worker_account_name = worker[0]["worker_account_name"]
         worker_name = worker[0]["name"]
-        proxy_votes = _get_formatted_proxy_votes(proxies, vote_id)        
+        proxy_votes = _get_formatted_proxy_votes(proxies, vote_id)
 
         workers_votes.append([worker_account_name, id_worker, worker_name] + proxy_votes)
 
@@ -483,7 +483,7 @@ def get_committee_votes():
         vote_id =  committee_member[0]["vote_id"]
         id_committee = committee_member[0]["id"]
         committee_account_name = committee_member[0]["committee_member_account_name"]
-        proxy_votes = _get_formatted_proxy_votes(proxies, vote_id)        
+        proxy_votes = _get_formatted_proxy_votes(proxies, vote_id)
 
         committee_votes.append([committee_account_name, id_committee] + proxy_votes)
 
@@ -680,7 +680,7 @@ def get_daily_volume_dex_dates():
     date_list = [d.strftime("%Y-%m-%d") for d in date_list]
     return list(reversed(date_list))
 
- 
+
 def get_daily_volume_dex_data():
     con = psycopg2.connect(**config.POSTGRES)
     cur = con.cursor()
@@ -742,7 +742,7 @@ def get_all_referrers(account_id, page=0):
     return results
 
 def get_grouped_limit_orders(quote, base, group=10, limit=False):
-    limit = _ensure_safe_limit(limit)    
+    limit = _ensure_safe_limit(limit)
 
     base = _ensure_asset_id(base)
     quote = _ensure_asset_id(quote)
