@@ -10,7 +10,7 @@ ELASTICSEARCH = {
     #'hosts': os.environ.get('ELASTICSEARCH_URL', 'http://148.251.10.231:5005/').split(','), # oxarbitrage
     'hosts': os.environ.get('ELASTICSEARCH_URL', 'http://bts-es.clockwork.gr:5000').split(','), # clockwork
     'user': os.environ.get('ELASTICSEARCH_USER', None),
-    'password': os.environ.get('ELASTICSEARCH_USER', None)
+    'password': os.environ.get('ELASTICSEARCH_PASSWORD', None)
 }
 
 
