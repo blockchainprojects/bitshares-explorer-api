@@ -141,13 +141,13 @@ paths:
       parameters:
         - in: query
           name: from_date
-          default: "2019-01-01T00:00:00"
+          default: "2019-01-01"
           type: string
           required: false
           description: Start date range
         - in: query
           name: to_date
-          default: "2019-12-01T00:00:00"
+          default: "2019-12-01"
           type: string
           required: false
           description: End date range
@@ -184,13 +184,13 @@ paths:
       parameters:
         - in: query
           name: from_date
-          default: "2019-01-01T00:00:00"
+          default: "2019-01-01"
           type: string
           required: false
           description: Start date range
         - in: query
           name: to_date
-          default: "2019-12-01T00:00:00"
+          default: "2019-12-01"
           type: string
           required: false
           description: End date range

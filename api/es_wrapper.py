@@ -136,12 +136,8 @@ def make_equal_time_intervals( from_date, to_date, datapoints ):
     datetime_from   = None
     datetime_to     = None
 
-    try:
-        datetime_from = datetime.strptime( from_date, datetime_format )
-        datetime_to   = datetime.strptime( to_date, datetime_format )
-    except ValueError:
-        datetime_from = datetime.strptime( "2019-01-01", datetime_format )
-        datetime_to   = datetime.strptime( "2020-01-01", datetime_format )
+    datetime_from = datetime.strptime( from_date, datetime_format )
+    datetime_to   = datetime.strptime( to_date, datetime_format )
 
     time_window_days = ( datetime_to - datetime_from ).days / datapoints
     if time_window_days == 0:
@@ -274,7 +270,15 @@ def get_account_power( from_date="2019-01-01", to_date="2020-01-01", account="1.
             "total_powers": []
         }
 
-    hits = _get_account_power( from_date, to_date, account, datapoints )
+    hits = None
+    try:
+        hits = _get_account_power( from_date, to_date, account, datapoints )
+    except ValueError:
+        return {
+            "account": account,
+            "name": "ERROR: wrong dateformat (format: YYYY-MM-DD)",
+        }
+
     blocks      = []
     block_time  = []
     self_powers = []
@@ -382,7 +386,14 @@ def get_voteable_votes( from_date="2019-01-01", to_date="2020-01-01", id="1.14.2
     if datapoints > 700:
         datapoints = 700
 
-    hits = _get_voteable_votes( from_date, to_date, vote_id, datapoints )
+    hits = None
+    try:
+        hits = _get_voteable_votes( from_date, to_date, vote_id, datapoints )
+    except ValueError:
+        return {
+            "vote_id": "ERROR: wrong dateformat (format: YYYY-MM-DD)",
+            "name": "ERROR: wrong dateformat (format: YYYY-MM-DD)",
+        }
 
     blocks     = []
     block_time = []
