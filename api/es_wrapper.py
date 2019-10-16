@@ -143,6 +143,8 @@ def make_equal_time_intervals( from_date, to_date, datapoints ):
         datetime_to   = datetime.strptime( "2020-01-01", datetime_format )
 
     time_window_days = ( datetime_to - datetime_from ).days / datapoints
+    if time_window_days == 0:
+        time_window_days = 1
     delta_between_points = timedelta( days=time_window_days )
 
     datetime_intervals = []
