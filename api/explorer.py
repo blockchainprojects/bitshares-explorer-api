@@ -5,7 +5,7 @@ import connexion.problem
 from services.bitshares_websocket_client import client as bitshares_ws_client
 from services.bitshares_elasticsearch_client import client as bitshares_es_client
 from services.cache import cache
-import es_wrapper
+from . import es_wrapper
 import config
 
 def _bad_request(detail):

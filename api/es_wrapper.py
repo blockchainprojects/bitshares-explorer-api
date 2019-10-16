@@ -2,7 +2,8 @@ from elasticsearch_dsl import Search, Q
 from services.bitshares_elasticsearch_client import es
 from elasticsearch.exceptions import NotFoundError
 from datetime import datetime, timedelta
-import explorer
+from . import explorer
+from services.cache import cache
 
 def get_account_history(account_id=None, operation_type=None, from_=0, size=10,
                         from_date='2015-10-10', to_date='now', sort_by='-operation_id_num',
@@ -226,6 +227,7 @@ def merge_fields_below_percentage( merge_below_percentage, size_successful_queri
 
     return storage_list
 
+@cache.memoize()
 def get_account_power( from_date="2019-01-01", to_date="2020-01-01", account="1.2.285",
                        datapoints=50, type="total" ):
     global account_power_cache
@@ -252,7 +254,7 @@ def get_account_power( from_date="2019-01-01", to_date="2020-01-01", account="1.
 
     print( "after explorer" )
 
-    hits = account_power_cache.get( account, datapoints, from_date, to_date )
+    hits = None #account_power_cache.get( account, datapoints, from_date, to_date )
     if hits == None: # nothing cached query the data
         hits = []
 
@@ -325,6 +327,7 @@ def get_account_power( from_date="2019-01-01", to_date="2020-01-01", account="1.
     #ret = jsonify( ret )
     return ret
 
+@cache.memoize()
 # returns the voting power of a worker over time with each account voted for him
 def get_voteable_votes( from_date="2019-01-01", to_date="2020-01-01", id="1.14.206",
                         datapoints=50, type="total" ):
