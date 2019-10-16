@@ -25,7 +25,7 @@ if not 'EXPOSED_APIS' in dir(config) or len(config.EXPOSED_APIS) == 0:
 else:
     spec.add_spec(path.join(path.dirname(__file__), 'swagger/api.yaml'))
     for api in config.EXPOSED_APIS:
-        spec.add_spec(path.join(path.dirname(__file__), 'swagger/paths_{}.yaml'.format(api)))   
+        spec.add_spec(path.join(path.dirname(__file__), 'swagger/paths_{}.yaml'.format(api)))
 app.add_api(spec)
 
 import services.profiler
