@@ -2,6 +2,7 @@ from elasticsearch_dsl import Search, Q
 from services.bitshares_elasticsearch_client import es
 from elasticsearch.exceptions import NotFoundError
 from datetime import datetime, timedelta
+import explorer
 
 def get_account_history(account_id=None, operation_type=None, from_=0, size=10,
                         from_date='2015-10-10', to_date='now', sort_by='-operation_id_num',
@@ -230,11 +231,14 @@ def get_account_power( from_date="2019-01-01", to_date="2020-01-01", account="1.
     if datapoints > 700:
         datapoints = 700
 
+    print( "before explorer" )
     account_obj = None
     try:
-        account_obj = explorer.get_account( account )[0]
+        print( "acc:", account)
+        account_obj = explorer.get_account( account )
     except: # RPCError: probably due to not existent account
         # TODO add error msg
+        print( "EXPCEPTION")
         return
         {
             "account":      "ERROR",
@@ -244,7 +248,7 @@ def get_account_power( from_date="2019-01-01", to_date="2020-01-01", account="1.
             "total_powers": []
         }
 
-
+    print( "after explorer" )
 
     hits = account_power_cache.get( account, datapoints, from_date, to_date )
     if hits == None: # nothing cached query the data
