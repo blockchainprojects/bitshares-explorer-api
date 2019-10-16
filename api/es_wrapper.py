@@ -88,9 +88,17 @@ voteable_votes_cache = ResponseCache(100)
 # creates equal time intervals for partial es querries
 def make_equal_time_intervals( from_date, to_date, datapoints ):
 
-    datetime_format = "%Y-%m-%dT%H:%M:%S"
-    datetime_from   = datetime.strptime( from_date, datetime_format )
-    datetime_to     = datetime.strptime( to_date, datetime_format )
+    datetime_format = "%Y-%m-%d"
+    datetime_from   = None
+    datetime_to     = None
+
+    try:
+        datetime_from = datetime.strptime( from_date, datetime_format )
+        datetime_to   = datetime.strptime( to_date, datetime_format )
+    except ValueError:
+        datetime_from = datetime.strptime( "2019-01-01", datetime_format )
+        datetime_to   = datetime.strptime( "2020-01-01", datetime_format )
+
     time_window_days = ( datetime_to - datetime_from ).days / datapoints
     delta_between_points = timedelta( days=time_window_days )
 
@@ -173,7 +181,7 @@ def merge_fields_below_percentage( merge_below_percentage, size_successful_queri
 
     return storage_list
 
-def get_account_power( from_date="2018-01-01T00:00:00", to_date="2019-07-15T00:00:00", account="1.2.285",
+def get_account_power( from_date="2019-01-01", to_date="2020-01-01", account="1.2.285",
                        datapoints=50, type="total" ):
     global account_power_cache
 
@@ -270,7 +278,7 @@ def get_account_power( from_date="2018-01-01T00:00:00", to_date="2019-07-15T00:0
     return ret
 
 # returns the voting power of a worker over time with each account voted for him
-def get_voteable_votes( from_date="2019-01-01T00:00:00", to_date="2019-12-15T00:00:00", id="1.14.206",
+def get_voteable_votes( from_date="2019-01-01", to_date="2020-01-01", id="1.14.206",
                         datapoints=50, type="total" ):
     print( "REQUEST RECEIVED" )
     global voteable_votes_cache
@@ -288,7 +296,6 @@ def get_voteable_votes( from_date="2019-01-01T00:00:00", to_date="2019-12-15T00:
             break
 
     print( "vote_id", vote_id )
-    print( es )
     # TODO maybe remove
     if datapoints > 700:
         datapoints = 700
