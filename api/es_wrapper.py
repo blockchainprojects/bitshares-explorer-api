@@ -230,7 +230,7 @@ def _get_account_power( from_date, to_date, account, datapoints ):
     for i in range( 1, len(time_intervals) ):
 
         from_date_to_search = time_intervals[i-1]
-        to_date_to_search = time_intervals[i]
+        to_date_to_search   = time_intervals[i]
 
         print( "Searching from: ", from_date_to_search, " to: ", to_date_to_search )
 
@@ -263,11 +263,8 @@ def get_account_power( from_date="2019-01-01", to_date="2020-01-01", account="1.
         # TODO add error msg
         print( "EXPCEPTION: probably due to wrong id")
         return {
-            "account":      "ERROR: probably due to wrong account id",
-            "blocks":       [],
-            "block_time":   [],
-            "self_powers":  [],
-            "total_powers": []
+            "account": account,
+            "name:":   "ERROR: probably due to wrong account id"
         }
 
     hits = None
@@ -276,7 +273,7 @@ def get_account_power( from_date="2019-01-01", to_date="2020-01-01", account="1.
     except ValueError:
         return {
             "account": account,
-            "name": "ERROR: wrong dateformat (format: YYYY-MM-DD)",
+            "name":    "ERROR: wrong dateformat (format: YYYY-MM-DD)",
         }
 
     blocks      = []
@@ -376,9 +373,9 @@ def get_voteable_votes( from_date="2019-01-01", to_date="2020-01-01", id="1.14.2
 
     if vote_id == "":
         return {
-            "id":          id,
-            "vote_id":     "ERROR ID DOES NOT EXIST",
-            "name":        "ERROR ID DOES NOT EXIST",
+            "id":      id,
+            "vote_id": "ERROR: id does not exist",
+            "name":    "ERROR: id does not exist",
         }
 
 
@@ -392,7 +389,7 @@ def get_voteable_votes( from_date="2019-01-01", to_date="2020-01-01", id="1.14.2
     except ValueError:
         return {
             "vote_id": "ERROR: wrong dateformat (format: YYYY-MM-DD)",
-            "name": "ERROR: wrong dateformat (format: YYYY-MM-DD)",
+            "name":    "ERROR: wrong dateformat (format: YYYY-MM-DD)",
         }
 
     blocks     = []
