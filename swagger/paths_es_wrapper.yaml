@@ -1,5 +1,5 @@
 paths:
-  "/get_account_history":
+  "/es/account_history":
     get:
       description: Get all operations in history with pager, similar to bitshares node call but with fullter features like search by date, filter by operation and others.
       operationId: api.es_wrapper.get_account_history
@@ -8,18 +8,26 @@ paths:
           name: account_id
           type: string
           required: false
+          default: ''
           description: Account id to get ops from
         - in: query
           name: operation_type
-          type: string
+          type: integer
           required: false
+          default: -1
           description: 1-44 Operation type
         - in: query
           name: from_
           default: 0
           type: integer
           required: false
-          description: Record to start getting results
+          description: Record to start getting results. If more than 10000 results, use search_after instead.
+        - in: query
+          name: search_after
+          default: ''
+          type: string
+          required: false
+          description: Start search after this value, should match sort_by type. Multiple fields could be provided separated by a coma. This will take precedence of the from_ paremeter.
         - in: query
           name: size
           default: 10
@@ -40,10 +48,10 @@ paths:
           description: End date range
         - in: query
           name: sort_by
-          default: "-block_data.block_time"
+          default: "-operation_id_num"
           type: string
           required: false
-          description: Order by an output field
+          description: Order by an output field, multiple fields could be provided separated by a coma
         - in: query
           name: type
           default: "data"
@@ -64,7 +72,7 @@ paths:
       tags:
         - wrapper
 
-  "/get_single_operation":
+  "/es/single_operation":
     get:
       description: Get a single operation by the operation ID.
       operationId: api.es_wrapper.get_single_operation
@@ -82,7 +90,20 @@ paths:
           description: Error processing parameters
       tags:
         - wrapper
-  "/get_trx":
+
+  "/es/is_alive":
+    get:
+      description: Queries the latest head block and gives synchronization status of the elastic search database
+      operationId: api.es_wrapper.is_alive
+      responses:
+        '200':
+          description: json data with status, server_time and head_block_time and statistics
+        '500':
+          description: Error processing parameters
+      tags:
+        - wrapper
+
+  "/es/trx":
     get:
       description: Get the operations inside a transaction hash.
       operationId: api.es_wrapper.get_trx

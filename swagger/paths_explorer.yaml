@@ -49,25 +49,6 @@ paths:
       tags:
         - api
         - account
-  "/account_id":
-    get:
-      description: Get account ID by name
-      operationId: api.explorer.get_account_id
-      parameters:
-        - in: query
-          name: account_name
-          default: committee-account
-          type: string
-          required: true
-          description: Account name
-      responses:
-        '200':
-          description: 1 account ID
-        '500':
-          description: Error processing parameters
-      tags:
-        - api
-        - account
   "/operation":
     get:
       description: Get operation by ID
@@ -87,51 +68,67 @@ paths:
       tags:
         - api
         - operation
-  "/operation_full":
+  "/operation_type":
     get:
-      description: Get operation by ID in a full node connection
-      operationId: api.explorer.get_operation_full
+      description: Get operation type by ID or name
+      operationId: api.explorer.get_operation_type
       parameters:
         - in: query
-          name: operation_id
-          default: 1.11.0
+          name: id
+          default: null
+          x-nullable: true
+          type: integer
+          required: false
+          description: 'Operation type ID (ex: 0)'
+        - in: query
+          name: name
+          default: null
+          x-nullable: true
           type: string
-          required: true
-          description: Operation ID
+          required: false
+          description: 'Operation type name (ex: transfer)'
       responses:
         '200':
-          description: 1 operation
+          description: Operation type description
         '500':
           description: Error processing parameters
       tags:
         - api
         - operation
-  "/operation_full_elastic":
+        - utility
+  "/operation_types":
     get:
-      description: Get operation by ID in a elasticsearch wrapper connection
-      operationId: api.explorer.get_operation_full_elastic
-      parameters:
-        - in: query
-          name: operation_id
-          default: 1.11.0
-          type: string
-          required: true
-          description: Operation ID
+      description: Get operation types
+      operationId: api.explorer.get_operation_types
       responses:
         '200':
-          description: 1 operation
+          description: Array of operation type description
         '500':
           description: Error processing parameters
       tags:
         - api
         - operation
+        - utility
   "/accounts":
     get:
       description: Get an account list of the most 100 rich CORE holders.
       operationId: api.explorer.get_accounts
+      parameters:
+        - in: query
+          name: start
+          default: 0
+          type: integer
+          required: false
+          description: Pagination start
+        - in: query
+          name: limit
+          default: 100
+          type: integer
+          required: false
+          description: Number of records to retrieve
       responses:
         '200':
-          description: Rich list of accounts
+          description: Requested accounts
         '500':
           description: Error processing parameters
       tags:
@@ -182,31 +179,45 @@ paths:
         - blockchain
   "/account_history":
     get:
-      description: Get the last 20 operations of an account
+      description: Get history of account by pages
       operationId: api.explorer.get_account_history
+      deprecated: true
       parameters:
         - in: query
           name: account_id
           default: 1.2.0
           type: string
           required: true
-          description: Account ID
+          description: the account to get operations from
+        - in: query
+          name: page
+          default: 0
+          type: integer
+          required: false
+          description: the page. Fails if more than 10000 results, use search_after instead.
+        - in: query
+          name: search_after
+          default: ''
+          type: string
+          required: false
+          description: the operation id to search the result from. This will takes precedence over the page parameter if provided.
       responses:
         '200':
-          description: Last 20 operations for account
+          description: operations of account by page
         '500':
           description: Error processing parameters
       tags:
         - api
         - account
-  "/get_asset":
+        - operation
+  "/asset":
     get:
       description: Get all info about an asset
       operationId: api.explorer.get_asset
       parameters:
         - in: query
           name: asset_id
-          default: 1.3.0
+          default: 'BTS'
           type: string
           required: true
           description: Asset ID
@@ -218,14 +229,14 @@ paths:
       tags:
         - api
         - asset
-  "/get_asset_and_volume":
+  "/asset_and_volume":
     get:
       description: Same as get_asset but with additional volume info.
       operationId: api.explorer.get_asset_and_volume
       parameters:
         - in: query
           name: asset_id
-          default: 1.3.0
+          default: 'BTS'
           type: string
           required: true
           description: Asset ID
@@ -237,26 +248,7 @@ paths:
       tags:
         - api
         - asset
-  "/block_header":
-    get:
-      description: Get the block header information of a block_num
-      operationId: api.explorer.get_block_header
-      parameters:
-        - in: query
-          name: block_num
-          default: '1'
-          type: string
-          required: true
-          description: Block number to get the header info
-      responses:
-        '200':
-          description: Block header data
-        '500':
-          description: Error processing parameters
-      tags:
-        - api
-        - block
-  "/get_block":
+  "/block":
     get:
       description: Get full block data
       operationId: api.explorer.get_block
@@ -275,7 +267,7 @@ paths:
       tags:
         - api
         - block
-  "/get_ticker":
+  "/ticker":
     get:
       description: Get ticker data for a market
       operationId: api.explorer.get_ticker
@@ -300,44 +292,7 @@ paths:
       tags:
         - api
         - market
-  "/get_volume":
-    get:
-      description: Get 24hs volume data for a market
-      operationId: api.explorer.get_volume
-      parameters:
-        - in: query
-          name: base
-          default: USD
-          type: string
-          required: true
-          description: Base asset name or ID
-        - in: query
-          name: quote
-          default: CNY
-          type: string
-          required: true
-          description: Quote asset name or ID
-      responses:
-        '200':
-          description: 24hs volume data
-        '500':
-          description: Error processing parameters
-      tags:
-        - api
-        - market
-  "/lastnetworkops":
-    get:
-      description: Get the last 10 operations made in the blockchain.
-      operationId: api.explorer.get_last_network_ops
-      responses:
-        '200':
-          description: Last 10 operations made in the network.
-        '500':
-          description: Error processing parameters
-      tags:
-        - api
-        - blockchain
-  "/get_object":
+  "/object":
     get:
       description: Get object from ID
       operationId: api.explorer.get_object
@@ -356,14 +311,14 @@ paths:
       tags:
         - api
         - object
-  "/get_asset_holders_count":
+  "/asset_holders_count":
     get:
       description: Get a count of holders and asset haves.
       operationId: api.explorer.get_asset_holders_count
       parameters:
         - in: query
           name: asset_id
-          default: 1.3.0
+          default: 'BTS'
           type: string
           required: true
           description: Asset ID
@@ -375,14 +330,14 @@ paths:
       tags:
         - api
         - asset
-  "/get_asset_holders":
+  "/asset_holders":
     get:
       description: Get asset holders for an asset.
       operationId: api.explorer.get_asset_holders
       parameters:
         - in: query
           name: asset_id
-          default: 1.3.0
+          default: 'BTS'
           type: string
           required: true
           description: Asset ID
@@ -397,7 +352,7 @@ paths:
           default: 20
           type: integer
           required: false
-          description: Number of records to retreive
+          description: Number of records to retrieve
       responses:
         '200':
           description: Account holder and amount
@@ -406,7 +361,7 @@ paths:
       tags:
         - api
         - asset
-  "/get_workers":
+  "/workers":
     get:
       description: Get all workers.
       operationId: api.explorer.get_workers
@@ -418,14 +373,14 @@ paths:
       tags:
         - api
         - worker
-  "/get_markets":
+  "/markets":
     get:
       description: Get all the active markets for an asset.
       operationId: api.explorer.get_markets
       parameters:
         - in: query
           name: asset_id
-          default: 1.3.0
+          default: 'BTS'
           type: string
           required: true
           description: Asset ID or name
@@ -437,7 +392,7 @@ paths:
       tags:
         - api
         - market
-  "/get_most_active_markets":
+  "/most_active_markets":
     get:
       description: Get the most active 100 markets in the network.
       operationId: api.explorer.get_most_active_markets
@@ -449,20 +404,20 @@ paths:
       tags:
         - api
         - market
-  "/get_order_book":
+  "/order_book":
     get:
       description: Get the order book of a market.
       operationId: api.explorer.get_order_book
       parameters:
         - in: query
           name: base
-          default: 1.3.0
+          default: 'BTS'
           type: string
           required: true
           description: Base asset id
         - in: query
           name: quote
-          default: 1.3.1
+          default: 'CNY'
           type: string
           required: true
           description: Quote asset id
@@ -471,7 +426,7 @@ paths:
           default: 100
           type: integer
           required: false
-          description: Number of records to retreive
+          description: Number of records to retrieve
       responses:
         '200':
           description: the order book for the market
@@ -480,7 +435,7 @@ paths:
       tags:
         - api
         - market
-  "/get_margin_positions":
+  "/margin_positions":
     get:
       description: Get margin positions of an account.
       operationId: api.explorer.get_margin_positions
@@ -500,7 +455,7 @@ paths:
         - api
         - market
         - account
-  "/get_witnesses":
+  "/witnesses":
     get:
       description: Get all witnesses.
       operationId: api.explorer.get_witnesses
@@ -513,7 +468,7 @@ paths:
         - api
         - witness
         - governance
-  "/get_committee_members":
+  "/committee_members":
     get:
       description: Get all committee members.
       operationId: api.explorer.get_committee_members
@@ -545,13 +500,13 @@ paths:
       parameters:
         - in: query
           name: base
-          default: 1.3.0
+          default: 'BTS'
           type: string
           required: true
           description: Base asset id
         - in: query
           name: quote
-          default: 1.3.1
+          default: 'CNY'
           type: string
           required: true
           description: Quote asset id
@@ -664,30 +619,6 @@ paths:
       tags:
         - api
         - asset
-  "/top_operations":
-    get:
-      description: Top Operations
-      operationId: api.explorer.get_top_operations
-      responses:
-        '200':
-          description: Top ops
-        '500':
-          description: Error processing parameters
-      tags:
-        - api
-        - operation
-  "/last_network_transactions":
-    get:
-      description: last 20 network transactions
-      operationId: api.explorer.get_last_network_transactions
-      responses:
-        '200':
-          description: last network ops
-        '500':
-          description: Error processing parameters
-      tags:
-        - api
-        - operation
   "/lookup_accounts":
     get:
       description: Search account by its name start
@@ -726,7 +657,7 @@ paths:
       tags:
         - api
         - asset
-  "/getlastblocknumbher":
+  "/last_block_number":
     get:
       description: Get current block number
       operationId: api.explorer.get_last_block_number
@@ -738,128 +669,19 @@ paths:
       tags:
         - api
         - operation
-  "/account_history_pager":
+  "/last_block_time":
     get:
-      description: Get history of account by pages(need full node)
-      operationId: api.explorer.get_account_history_pager
-      parameters:
-        - in: query
-          name: account_id
-          default: 1.2.100
-          type: string
-          required: true
-          description: the account to get operations from
-        - in: query
-          name: page
-          default: 0
-          type: integer
-          required: true
-          description: the page
+      description: Get current block time
+      operationId: api.explorer.get_last_block_time
       responses:
         '200':
-          description: 20 operations of account by page
+          description:  last known block time
         '500':
           description: Error processing parameters
       tags:
         - api
-        - account
         - operation
-  "/account_history_pager_elastic":
-    get:
-      description: Get history of account by pages(need elasticsearch node)
-      operationId: api.explorer.get_account_history_pager_elastic
-      parameters:
-        - in: query
-          name: account_id
-          default: 1.2.0
-          type: string
-          required: true
-          description: the account to get operations from
-        - in: query
-          name: page
-          default: 0
-          type: integer
-          required: true
-          description: the page
-      responses:
-        '200':
-          description: 20 operations of account by page
-        '500':
-          description: Error processing parameters
-      tags:
-        - api
-        - account
-        - operation
-  "/get_limit_orders":
-    get:
-      description: Get open limit orders of a market
-      operationId: api.explorer.get_limit_orders
-      parameters:
-        - in: query
-          name: base
-          default: 1.3.0
-          type: string
-          required: true
-          description: base asset
-        - in: query
-          name: quote
-          default: 1.3.2
-          type: string
-          required: true
-          description: quote asset
-      responses:
-        '200':
-          description: open limit orders
-        '500':
-          description: Error processing parameters
-      tags:
-        - api
-        - market
-  "/get_call_orders":
-    get:
-      description: Get open call orders of a market
-      operationId: api.explorer.get_call_orders
-      parameters:
-        - in: query
-          name: asset_id
-          default: 1.3.219
-          type: string
-          required: true
-          description: ID of asset being settled
-      responses:
-        '200':
-          description: open call orders
-        '500':
-          description: Error processing parameters
-      tags:
-        - api
-        - market
-  "/get_settle_orders":
-    get:
-      description: Get open settle orders of a market
-      operationId: api.explorer.get_settle_orders
-      parameters:
-        - in: query
-          name: base
-          default: 1.3.0
-          type: string
-          required: true
-          description: base asset
-        - in: query
-          name: quote
-          default: '0'
-          type: string
-          required: true
-          description: quote asset
-      responses:
-        '200':
-          description: open settle orders
-        '500':
-          description: Error processing parameters
-      tags:
-        - api
-        - market
-  "/get_dex_total_volume":
+  "/dex_total_volume":
     get:
       description: Get some total dex volume figures
       operationId: api.explorer.get_dex_total_volume
@@ -885,7 +707,7 @@ paths:
         - utility
   "/daily_volume_dex_data":
     get:
-      description: Get 60 days od plot volume data
+      description: Get 60 days of plot volume data
       operationId: api.explorer.get_daily_volume_dex_data
       responses:
         '200':
@@ -895,7 +717,7 @@ paths:
       tags:
         - api
         - utility
-  "/get_all_asset_holders":
+  "/all_asset_holders":
     get:
       description: Get all holders of an asset
       operationId: api.explorer.get_all_asset_holders
@@ -935,14 +757,14 @@ paths:
         - api
         - account
         - referrer
-  "/get_all_referrers":
+  "/all_referrers":
     get:
       description: Get referrers an account made
       operationId: api.explorer.get_all_referrers
       parameters:
         - in: query
           name: account_id
-          default: 2.2.0
+          default: 1.2.0
           type: string
           required: true
           description: account id or name
@@ -961,20 +783,20 @@ paths:
         - api
         - account
         - referrer
-  "/get_grouped_limit_orders":
+  "/grouped_limit_orders":
     get:
       description: Get the grouped order for a market
       operationId: api.explorer.get_grouped_limit_orders
       parameters:
         - in: query
           name: base
-          default: 1.3.0
+          default: 'BTS'
           type: string
           required: true
           description: base
         - in: query
           name: quote
-          default: 1.3.1
+          default: 'CNY'
           type: string
           required: true
           description: page

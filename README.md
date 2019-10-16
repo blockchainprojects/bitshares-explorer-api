@@ -2,27 +2,26 @@
 
 BitShares Explorer REST API is the backend service of the BitShares explorer that retrieve the infotmation from the blockchain.  
 
-http://185.208.208.184:5000/apidocs/
+[http://185.208.208.184:5000/apidocs/](http://185.208.208.184:5000/apidocs/)
+
+[https://explorer.bitshares-kibana.info/apidocs/](https://explorer.bitshares-kibana.info/apidocs/)
 
 Index:
 
 - [BitShares Explorer REST API](#bitshares-explorer-rest-api)
-    - [Installation](#installation)
-        - [Manual](#manual)
-            - [Install ElasticSearch](#install-elasticsearch)
-            - [Install a BitShares node with requirements.](#install-a-bitshares-node-with-requirements)
-            - [Install and setup postgres.](#install-and-setup-postgres)
-            - [Install BitShares Explorer API and dependencies.](#install-bitshares-explorer-api-and-dependencies)
-            - [Real Time ops grabber](#real-time-ops-grabber)
-            - [Cronjobs](#cronjobs)
-            - [Simple running](#simple-running)
-            - [Nginx and uwsgi](#nginx-and-uwsgi)
-            - [Domain setup and SSL](#domain-setup-and-ssl)
-        - [Docker](#docker)
-    - [Usage](#usage)
-        - [Swagger](#swagger)
-        - [Profiler](#profiler)
-        - [Open Explorer](#open-explorer)
+  - [Installation](#installation)
+    - [Manual](#manual)
+      - [Install ElasticSearch](#install-elasticsearch)
+      - [Install a BitShares node with requirements](#install-a-bitshares-node-with-requirements)
+      - [Install BitShares Explorer API and dependencies](#install-bitshares-explorer-api-and-dependencies)
+      - [Simple running](#simple-running)
+      - [Nginx and uwsgi](#nginx-and-uwsgi)
+    - [Docker](#docker)
+  - [Usage](#usage)
+    - [Swagger](#swagger)
+    - [Profiler](#profiler)
+    - [Open Explorer](#open-explorer)
+    - [Development](#development)
 
 ## Installation
 
@@ -34,7 +33,7 @@ Step by step on everything needed to have your own BitShares Explorer API up and
 
 #### Install ElasticSearch
 
-For full elasticsearch installation and usage tutorial please go to: https://github.com/bitshares/bitshares-core/wiki/ElasticSearch-Plugin
+For full elasticsearch installation and usage tutorial please go to: [https://github.com/bitshares/bitshares-core/wiki/ElasticSearch-Plugin](https://github.com/bitshares/bitshares-core/wiki/ElasticSearch-Plugin).
 
 The following is a  quick installation guide for elasticsearch in Ubuntu.
 
@@ -88,15 +87,15 @@ Stop the program with ctrl-c, daemonize and forget:
     tcp6       0      0 ::1:9200                :::*                    LISTEN     
     elastic@oxarbitrage:~$ 
 
-#### Install a BitShares node with requirements.
+#### Install a BitShares node with requirements
 
 This API backend connects to a BitShares `witness_node` to get data. This witness node must be configured with the following plugins:
 
-- `market_history`   
-- `grouped_orders` 
+- `market_history`
+- `grouped_orders`
 - `elasticsearch`
 
-Additionally, the node must have `asset_api` and `orders_api` enabled(off by default). 
+Additionally, the node must have `asset_api` and `orders_api` enabled(off by default).
 
 First download and build `bitshares-core`:
 
@@ -144,64 +143,7 @@ Check if it is working with:
 
 note: ask @clockwork about performance increment suggested for mainnet and elasticsearch.
 
-#### Install and setup postgres.
-
-Postgres is needed as a helper to store some data as stats we want to have and takes too much time to do client side so they are made once a day with cronjobs. Data is saved to postgres and available all the time to serve REST calls.
-
-It is expected that the use of postgres gets deprecated in future versions of this program, most likely with the introduction of `es_objects` plugin.
-
-By now, you need postgres, install by:
-
-`apt-get install postgresql`
-
-Make sure postgres is up and running. Start with `/etc/init.d/postgresql start`.
-If you get a warning of no cluster solve with:
-
-`pg_createcluster 9.4 main --start`
-
-where `9.4` is your postgres version.
-
-Create username and database:
-
-    su postgres
-    createuser postgres
-    createdb explorer
-    psql
-    psql=# alter user postgres with encrypted password 'posta';
-    psql=# grant all privileges on database explorer to postgres ;
-
-Import schema:
-
-    cd 
-    wget https://raw.githubusercontent.com/oxarbitrage/explorer-api/master/postgres/schema.txt
-    psql explorer < schema.txt
-
-Check your database tables were created:
-
-    postgres@oxarbitrage:~$ psql -d explorer
-    psql (9.5.12)
-    Type "help" for help.
-    explorer=# \dt
-               List of relations
-     Schema |   Name    | Type  |  Owner   
-    --------+-----------+-------+----------
-     public | assets    | table | postgres
-     public | holders   | table | postgres
-     public | markets   | table | postgres
-     public | ops       | table | postgres
-     public | proxies   | table | postgres
-     public | referrers | table | postgres
-     public | stats     | table | postgres
-    (7 rows)
-    
-    explorer=# select * from ops;
-     oid | oh | ath | block_num | trx_in_block | op_in_trx | datetime | account_id | account_name | op_type 
-    -----+----+-----+-----------+--------------+-----------+----------+------------+--------------+---------
-    (0 rows)
-    
-    explorer=# 
-
-#### Install BitShares Explorer API and dependencies.
+#### Install BitShares Explorer API and dependencies
 
 Install python and pip:
 
@@ -211,7 +153,7 @@ Clone the app:
 
     git clone https://github.com/oxarbitrage/bitshares-explorer-api
     cd bitshares-explorer-api/
-    
+
 Install virtual environment and setup:
 
     pip install virtualenv 
@@ -232,50 +174,23 @@ Install dependencies in virtual env activated:
 
     pip install -r requirements/production.pip
 
-
 To run the api, always need to have the full path to program in `PYTHONPATH` environment variable exported:
 
-`export PYTHONPATH=/root/bitshares/bitshares-explorer-api` 
+`export PYTHONPATH=/root/bitshares/bitshares-explorer-api`
 
-If you have errors in the output about websocket or psycopg you may need to also do:
-```
-apt-get install python-websocket
-apt-get install python-psycopg2
-```
+If you have errors in the output about websocket you may need to also do:
 
-#### Real Time ops grabber
+    apt-get install python-websocket
 
-<strike>
-First step to check if everything is correctly installed is by installing the real time operation grabber. This will subscribe by websocket to the bitshares-core backend and add every operation broadcasted by the node into the postgres database. This data is cleaned at the end of the day by one of the cronjobs, during that time data stored is used for daily calculations of network state.
-</strike>
+If you see a problem similar to:
 
+     WARNING:connexion.options:The swagger_ui directory could not be found.
+        Please install connexion with extra install: pip install connexion[swagger-ui]
+        or provide the path to your local installation by passing swagger_path=<your path>
 
-<strike>
-  
-Make sure you have `PYTHONPATH` set up and run the following command(can be in a `screen` session as the script will have to run permanently, can run in the background, can be added to init, etc:
-</strike>
+You need to execute:
+`pip install connexion[swagger-ui]`
 
-`python postgres/import_realtime_ops.py`
-
-
-<strike>
-You should see some output of sql queries being sent to postgres, make sure data is inserted by `select * from ops;` inside postgres `explorer` database.
-</strike>
-
-The realtime ops grabber had been deprecated by elasticsearch.
-
-#### Cronjobs
-
-Similar as postgres, it is expected that the cronjobs will not be needed in the future but by now, they are.
-
-Add the following taks to cron file with `crontab -e`:
-
-    0 1 * * *  export PYTHONPATH=/root/bitshares/bitshares-explorer-api; /root/bitshares/wrappers/bin/python /root/bitshares/bitshares-explorer-api/postgres/import_holders.py > /tmp/cronlog_holders.txt 2>&1 
-    0 2 * * *  export PYTHONPATH=/root/bitshares/bitshares-explorer-api; /root/bitshares/wrappers/bin/python /root/bitshares/bitshares-explorer-api/postgres/import_assets.py > /tmp/cronlog_assets.txt 2>&1
-    15 2 * * * export PYTHONPATH=/root/bitshares/bitshares-explorer-api; /root/bitshares/wrappers/bin/python /root/bitshares/bitshares-explorer-api/postgres/import_markets.py > /tmp/cronlog_markets.txt 2>&1
-    30 2 * * * export PYTHONPATH=/root/bitshares/bitshares-explorer-api; /root/bitshares/wrappers/bin/python /root/bitshares/bitshares-explorer-api/postgres/import_referrers.py > /tmp/cronlog_refs.txt 2>&1
-                                                  
-    
 #### Simple running
 
 In order to simply test and run the backend api you can do:
@@ -285,7 +200,7 @@ In order to simply test and run the backend api you can do:
 
 Then go to apidocs with your server external address:
 
-http://185.208.208.184:5000/apidocs/
+[http://185.208.208.184:5000/apidocs/](http://185.208.208.184:5000/apidocs/)
 
 #### Nginx and uwsgi
 
@@ -319,10 +234,11 @@ Now api can be started with:
 
     (wrappers) root@oxarbitrage ~/bitshares/bitshares-explorer-api # uwsgi --ini app.ini
 
-#### Domain setup and SSL
+Another common error is currently:
 
-[Todo]
-
+    WARNING:connexion.options:The swagger_ui directory could not be found.
+    Please install connexion with extra install: pip install connexion[swagger-ui]
+    or provide the path to your local installation by passing swagger_path=<your path>
 
 ### Docker
 
@@ -334,9 +250,11 @@ There are a lot of ways and application for this collection of API calls, at the
 
 ### Swagger
 
-http://185.208.208.184:5000/apidocs/
+[http://185.208.208.184:5000/apidocs/](http://185.208.208.184:5000/apidocs/)
 
-Allows to make calls directly from that address by changing the parameters of the request and getting the results. This is very convenient to make quick calls to the blockchain looking for specific data. 
+[https://explorer.bitshares-kibana.info/apidocs/](https://explorer.bitshares-kibana.info/apidocs/)
+
+Allows to make calls directly from that address by changing the parameters of the request and getting the results. This is very convenient to make quick calls to the blockchain looking for specific data.
 
 ### Profiler
 
@@ -348,11 +266,38 @@ Then you will be able to access profiling data at `http://localhost:5000/profile
 
 By default the profiler is not protected, to add basic authentification add username and password in `config.py` or using environment variables `PROFILER_USERNAME` and `PROFILER_PASSWORD`.
 
-
 ### Open Explorer
 
-- http://open-explorer.io
-- http://bitshares-explorer.io/
-- http://bitshares-testnet.xyz
+- [http://open-explorer.io](http://open-explorer.io)
+- [http://bitshares-explorer.io/](http://bitshares-explorer.io/)
+- [http://bitshares-testnet.xyz](http://bitshares-testnet.xyz)
 
 All versions of open-explorer uses this backend to get data.
+
+### Development
+
+To run the server in development mode to have an auto reload on code change:
+
+    FLASK_ENV=development flask run
+
+Run all tests:
+
+    PYTHONPATH=. pytest
+
+This will also run API tests (using [Tavern](https://taverntesting.github.io/)), that needs an local server to run, so make sure your development server is started.
+
+To run one specific test:
+
+    PYTHONPATH=. pytest -k test_ws_request
+
+Or for API tests:
+
+    PYTHONPATH=. py.test tests/test_api_explorer.tavern.yaml -k get_asset_holders_count
+
+You can run API tests on a non localhost server using the command:
+
+    PYTHONPATH=. py.test tavern-global-cfg=your_customized_environment.yaml tests/test_api_explorer.tavern.yaml
+
+See `tests/local_urls.yaml` to see how to define a new environment.
+
+And for non regression see `non_reg/README.md`

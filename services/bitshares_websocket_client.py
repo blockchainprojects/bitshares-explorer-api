@@ -1,4 +1,4 @@
-from websocket import create_connection
+from websocket import create_connection, WebSocketConnectionClosedException
 import json
 from services.cache import cache
 
@@ -7,14 +7,27 @@ class RPCError(Exception):
 
 class BitsharesWebsocketClient():
     def __init__(self, websocket_url):
-        self.ws = create_connection(websocket_url)
+        self.url = websocket_url
+        self._connect()
+
+    def _connect(self):
+        self.ws = create_connection(self.url)
         self.request_id = 1
         self.api_ids = {
             'database': 0,
             'login': 1
         }
+
     
     def request(self, api, method_name, params):
+        try:
+            return self._safe_request(api, method_name, params)
+        except WebSocketConnectionClosedException:
+            self.ws.close()
+            self._connect()
+            return self._safe_request(api, method_name, params)
+
+    def _safe_request(self, api, method_name, params):
         api_id = self.load_api_id(api)
         payload = {
             'id': self.request_id,
