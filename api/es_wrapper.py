@@ -228,59 +228,53 @@ def merge_fields_below_percentage( merge_below_percentage, size_successful_queri
     return storage_list
 
 @cache.memoize()
+def _get_account_power( from_date, to_date, account, datapoints ):
+    hits = []
+    time_intervals = make_equal_time_intervals( from_date, to_date, datapoints )
+    for i in range( 1, len(time_intervals) ):
+
+        from_date_to_search = time_intervals[i-1]
+        to_date_to_search = time_intervals[i]
+
+        print( "Searching from: ", from_date_to_search, " to: ", to_date_to_search )
+
+        req = Search( using=es, index="objects-voting-statistics", extra={"size": 1} ) # return size 1k
+        req = req.source( ["account", "stake", "proxy", "proxy_for", "block_time", "block_number"] ) # retrive only this attributes
+        req = req.sort("-block_number") # sort by blocknumber => last_block is first hit
+        qaccount = Q( "match", account=account ) # match account
+        qrange = Q( "range", block_time={ "gte": from_date_to_search, "lte": to_date_to_search} ) # match date range
+        req.query = qaccount & qrange # combine queries
+
+        response = req.execute()
+
+        for hit in response:
+            hit = hit.to_dict()
+            hits.append( hit )
+
+    return hits
+
 def get_account_power( from_date="2019-01-01", to_date="2020-01-01", account="1.2.285",
                        datapoints=50, type="total" ):
-    global account_power_cache
 
     if datapoints > 700:
         datapoints = 700
 
-    print( "before explorer" )
     account_obj = None
     try:
         print( "acc:", account)
         account_obj = explorer.get_account( account )
     except: # RPCError: probably due to not existent account
         # TODO add error msg
-        print( "EXPCEPTION")
-        return
-        {
-            "account":      "ERROR",
+        print( "EXPCEPTION: probably due to wrong id")
+        return {
+            "account":      "ERROR: probably due to wrong account id",
             "blocks":       [],
             "block_time":   [],
             "self_powers":  [],
             "total_powers": []
         }
 
-    print( "after explorer" )
-
-    hits = None #account_power_cache.get( account, datapoints, from_date, to_date )
-    if hits == None: # nothing cached query the data
-        hits = []
-
-        time_intervals = make_equal_time_intervals( from_date, to_date, datapoints )
-        for i in range( 1, len(time_intervals) ):
-
-            from_date_to_search = time_intervals[i-1]
-            to_date_to_search = time_intervals[i]
-
-            print( "Searching from: ", from_date_to_search, " to: ", to_date_to_search )
-
-            req = Search( using=es, index="objects-voting-statistics", extra={"size": 1} ) # return size 1k
-            req = req.source( ["account", "stake", "proxy", "proxy_for", "block_time", "block_number"] ) # retrive only this attributes
-            req = req.sort("-block_number") # sort by blocknumber => last_block is first hit
-            qaccount = Q( "match", account=account ) # match account
-            qrange = Q( "range", block_time={ "gte": from_date_to_search, "lte": to_date_to_search} ) # match date range
-            req.query = qaccount & qrange # combine queries
-
-            response = req.execute()
-
-            for hit in response:
-                hit = hit.to_dict()
-                hits.append( hit )
-
-        account_power_cache.add( account, datapoints, from_date, to_date, hits )
-
+    hits = _get_account_power( from_date, to_date, account, datapoints )
     blocks      = []
     block_time  = []
     self_powers = []
@@ -305,6 +299,7 @@ def get_account_power( from_date="2019-01-01", to_date="2020-01-01", account="1.
     else: # type == proxy
         proxy_powers = {}
         block_counter = 0
+
         for hit in hits:
             blocks.append( hit["block_number"] )
             block_time.append( hit["block_time"] )
@@ -314,6 +309,13 @@ def get_account_power( from_date="2019-01-01", to_date="2020-01-01", account="1.
 
         proxy_powers = merge_fields_below_percentage(
             5, len(blocks), datapoints, proxy_powers, self_powers )
+
+        for pp in proxy_powers:
+            try:
+                proxy_name = explorer.get_account_name( pp[0] )
+                pp[0] = proxy_name
+            except:
+                pass
 
         ret = {
             "account":      account,
@@ -328,12 +330,34 @@ def get_account_power( from_date="2019-01-01", to_date="2020-01-01", account="1.
     return ret
 
 @cache.memoize()
+def _get_voteable_votes( from_date, to_date, vote_id, datapoints ):
+    hits = []
+    time_intervals = make_equal_time_intervals( from_date, to_date, datapoints )
+
+    for i in range( 1, len(time_intervals) ):
+
+        from_date_to_search = time_intervals[i-1]
+        to_date_to_search   = time_intervals[i]
+
+        print( "Searching from: ", from_date_to_search, " to: ", to_date_to_search )
+
+        req = Search( using=es, index="objects-voteable-statistics", extra={ "size": 1 } ) # size: max return size
+        req = req.source( ["vote_id", "block_time", "block_number", "voted_by"] ) # retrive only this attributes
+        req = req.sort("-block_number") # sort by blocknumber => newest block is first hit
+        qvote_id = Q( "match_phrase", vote_id=vote_id )
+        qrange = Q( "range", block_time={ "gte": from_date_to_search, "lte": to_date_to_search} )
+        req.query = qvote_id & qrange
+        response = req.execute()
+
+        for hit in response:
+            hit = hit.to_dict()
+            hits.append( hit )
+
+    return hits
+
 # returns the voting power of a worker over time with each account voted for him
 def get_voteable_votes( from_date="2019-01-01", to_date="2020-01-01", id="1.14.206",
                         datapoints=50, type="total" ):
-    print( "REQUEST RECEIVED" )
-    global voteable_votes_cache
-
 
     # acquiring all worker and resolving the object_id to vote_id and name
     workers = explorer.get_workers()
@@ -346,40 +370,22 @@ def get_voteable_votes( from_date="2019-01-01", to_date="2020-01-01", id="1.14.2
             vote_id = worker["vote_for"]
             break
 
+    if vote_id == "":
+        return {
+            "id":          id,
+            "vote_id":     "ERROR ID DOES NOT EXIST",
+            "name":        "ERROR ID DOES NOT EXIST",
+        }
+
+
     print( "vote_id", vote_id )
-    # TODO maybe remove
     if datapoints > 700:
         datapoints = 700
 
-    hits = voteable_votes_cache.get( vote_id, datapoints, from_date, to_date )
-    if hits == None:
-        hits = []
+    hits = _get_voteable_votes( from_date, to_date, vote_id, datapoints )
 
-        time_intervals = make_equal_time_intervals( from_date, to_date, datapoints )
-        for i in range( 1, len(time_intervals) ):
-
-            from_date_to_search = time_intervals[i-1]
-            to_date_to_search   = time_intervals[i]
-
-            print( "Searching from: ", from_date_to_search, " to: ", to_date_to_search )
-
-            req = Search( using=es, index="objects-voteable-statistics", extra={ "size": 1 } ) # size: max return size
-            req = req.source( ["vote_id", "block_time", "block_number", "voted_by"] ) # retrive only this attributes
-            req = req.sort("-block_number") # sort by blocknumber => newest block is first hit
-            qvote_id = Q( "match_phrase", vote_id=vote_id )
-            qrange = Q( "range", block_time={ "gte": from_date_to_search, "lte": to_date_to_search} )
-            req.query = qvote_id & qrange
-            response = req.execute()
-
-            for hit in response:
-                hit = hit.to_dict()
-                hits.append( hit )
-
-        voteable_votes_cache.add( vote_id, datapoints, from_date, to_date, hits )
-
-
-    blocks      = []
-    block_time  = []
+    blocks     = []
+    block_time = []
 
     if type == "total":
         total_votes = []
@@ -409,6 +415,12 @@ def get_voteable_votes( from_date="2019-01-01", to_date="2020-01-01", id="1.14.2
             block_counter += 1
 
         voted_by = merge_fields_below_percentage( 5, len(blocks), datapoints, voted_by, None )
+
+        for vb in voted_by:
+            try:
+                vb[0] = explorer.get_account_name( vb[0] )
+            except:
+                pass
 
         ret = {
             "id":         id,
