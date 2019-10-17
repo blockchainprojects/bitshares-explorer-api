@@ -149,8 +149,12 @@ def get_account_power(
         to_date="2020-01-01",
         account="1.2.285",
         datapoints=50,
-        type="total"  # @ReservedAssignment
+        type="total",  # @ReservedAssignment
+        grouplessthan=5
 ):
+
+    if grouplessthan < 2:
+        grouplessthan = 2
 
     if datapoints > 700:
         datapoints = 700
@@ -210,7 +214,7 @@ def get_account_power(
             block_counter += 1
 
         proxy_powers = merge_fields_below_percentage(
-            5, len(blocks), datapoints, proxy_powers, self_powers)
+            grouplessthan, len(blocks), datapoints, proxy_powers, self_powers)
 
         for pp in proxy_powers:
             try:
@@ -233,7 +237,7 @@ def get_account_power(
     return ret
 
 
-@needs_es
+@needs_es()
 @cache.memoize()
 def _get_voteable_votes(from_date, to_date, vote_id, datapoints):
     hits = []
@@ -272,7 +276,8 @@ def get_voteable_votes(
         to_date="2020-01-01",
         id="1.14.206",  # @ReservedAssignment
         datapoints=50,
-        type="total"  # @ReservedAssignment
+        type="total",  # @ReservedAssignment
+        grouplessthan=5
 ):
     """
     Returns the voting power of a worker over time with each account voted for him
@@ -287,6 +292,9 @@ def get_voteable_votes(
     :param type:
     :type type:
     """
+
+    if grouplessthan < 2:
+        grouplessthan = 2
 
     # acquiring all worker and resolving the object_id to vote_id and name
     workers = explorer.get_workers()
@@ -349,7 +357,7 @@ def get_voteable_votes(
             voted_by = fill_sub_power(hit["voted_by"], voted_by, block_counter, datapoints)
             block_counter += 1
 
-        voted_by = merge_fields_below_percentage(5, len(blocks), datapoints, voted_by, None)
+        voted_by = merge_fields_below_percentage(grouplessthan, len(blocks), datapoints, voted_by, None)
 
         for vb in voted_by:
             try:

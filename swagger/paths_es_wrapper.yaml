@@ -169,6 +169,12 @@ paths:
           type: string
           required: false
           description: Type to query (total/proxy)
+        - in: query
+          name: grouplessthan
+          default: 5
+          type: integer
+          required: false
+          description: If voters are unraveled, consolidate all with power less than this
       responses:
         '200':
           description: TODO ADD DESCRIPTION
@@ -212,6 +218,12 @@ paths:
           type: string
           required: false
           description: Type of data (total/voters)
+        - in: query
+          name: grouplessthan
+          default: 5
+          type: integer
+          required: false
+          description: If voters are unraveled, consolidate all with power less than this
       responses:
         '200':
           description: TODO ADD DESCRIPTION
