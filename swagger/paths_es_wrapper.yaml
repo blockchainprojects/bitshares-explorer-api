@@ -137,7 +137,7 @@ paths:
   "/get_account_power":
     get:
       description: Get the account power of an account.
-      operationId: api.es_wrapper.get_account_power
+      operationId: api.voting.get_account_power
       parameters:
         - in: query
           name: from_date
@@ -180,7 +180,7 @@ paths:
   "/get_voteable_votes":
     get:
       description: Get the votes for a voteable object.
-      operationId: api.es_wrapper.get_voteable_votes
+      operationId: api.voting.get_voteable_votes
       parameters:
         - in: query
           name: from_date
