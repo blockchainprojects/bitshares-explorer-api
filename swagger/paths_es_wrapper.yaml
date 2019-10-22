@@ -172,7 +172,7 @@ paths:
         - in: query
           name: grouplessthan
           default: 5
-          type: integer
+          type: number
           required: false
           description: If voters are unraveled, consolidate all with power less than this
       responses:
@@ -221,7 +221,7 @@ paths:
         - in: query
           name: grouplessthan
           default: 5
-          type: integer
+          type: number
           required: false
           description: If voters are unraveled, consolidate all with power less than this
       responses:

@@ -96,7 +96,7 @@ def merge_fields_below_percentage(
     merged_elements = [0] * size_successful_queries
     to_delete = []
     for _id, power in storage.items():
-        if power[last_block] < merge_below_abs:
+        if not any(_value >= merge_below_abs for _value in power):
             for i in range(size_successful_queries):
                 merged_elements[i] += power[i]
             to_delete.append(_id)
@@ -296,22 +296,27 @@ def get_voteable_votes(
     if grouplessthan < 2:
         grouplessthan = 2
 
-    # acquiring all worker and resolving the object_id to vote_id and name
-    workers = explorer.get_workers()
-    name = ""
-    vote_id = ""
-    for worker in workers:
-        worker = worker[0]
-        if worker["id"] == id:
-            name = worker["name"]
-            vote_id = worker["vote_for"]
-            break
-
-    if vote_id == "":
+    # fetch the votable object
+    voteable_object = explorer.get_object(id)
+    if voteable_object is None:
         return {
             "id": id,
-            "vote_id": "ERROR ID DOES NOT EXIST",
-            "name": "ERROR ID DOES NOT EXIST",
+            "vote_id": "ID does not exist"
+        }
+
+    if id[0:4] == "1.6.":  # witness
+        name = explorer.get_object(voteable_object["witness_account"])["name"]
+        vote_id = voteable_object["vote_id"]
+    elif id[0:4] == "1.5.":  # comittee
+        name = explorer.get_object(voteable_object["committee_member_account"])["name"]
+        vote_id = voteable_object["vote_id"]
+    elif id[0:4] == "1.14":  # worker
+        name = voteable_object["name"]
+        vote_id = voteable_object["vote_for"]
+    else:
+        return {
+            "id": id,
+            "vote_id": "ID type not supported"
         }
 
     print("vote_id", vote_id)
