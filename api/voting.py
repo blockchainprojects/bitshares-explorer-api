@@ -169,7 +169,7 @@ def get_account_power(
         print("EXPCEPTION: probably due to wrong id: " + str(e))
         return {
             "account": account,
-            "name:": "ERROR: probably due to wrong account id"
+            "error:": "Account does not exist"
         }
 
     hits = None
@@ -277,7 +277,8 @@ def get_voteable_votes(
         id="1.14.206",  # @ReservedAssignment
         datapoints=50,
         type="total",  # @ReservedAssignment
-        grouplessthan=5
+        grouplessthan=5,
+        add_threshhold=True
 ):
     """
     Returns the voting power of a worker over time with each account voted for him
@@ -304,6 +305,7 @@ def get_voteable_votes(
             "vote_id": "ID does not exist"
         }
 
+    threshhold_id = None
     if id[0:4] == "1.6.":  # witness
         name = explorer.get_object(voteable_object["witness_account"])["name"]
         vote_id = voteable_object["vote_id"]
@@ -313,6 +315,9 @@ def get_voteable_votes(
     elif id[0:4] == "1.14":  # worker
         name = voteable_object["name"]
         vote_id = voteable_object["vote_for"]
+        if add_threshhold:
+            _voteable_object = explorer.get_object("1.14.0")
+            threshhold_id = _voteable_object["vote_for"]
     else:
         return {
             "id": id,
@@ -335,6 +340,29 @@ def get_voteable_votes(
     blocks = []
     block_time = []
 
+    threshold = None
+    if threshhold_id is not None and vote_id != threshhold_id:
+        try:
+            threshhold_hits = _get_voteable_votes(from_date, to_date, threshhold_id, datapoints)
+            threshold = []
+            for _search in hits:
+                # threshold and voteable might differ, insert corresponding blocks only
+                for hit in threshhold_hits:
+                    added = False
+                    if hit["block_number"] == _search["block_number"]:
+                        added = True
+                        threshold.append(calc_total_power(hit["voted_by"]))
+                        break
+                if not added:
+                    raise Exception("This shouldn't happen")
+        except ValueError:
+            return {
+                "vote_id": "ERROR: wrong dateformat (format: YYYY-MM-DD)",
+                "name": "ERROR: wrong dateformat (format: YYYY-MM-DD)",
+            }
+        except Exception:
+            # simply don't show threshold
+            pass
     if type == "total":
         total_votes = []
 
@@ -378,5 +406,8 @@ def get_voteable_votes(
             "block_time": block_time,
             "voted_by": voted_by
         }
+
+    if threshold is not None:
+        ret["threshold"] = threshold
 
     return ret
