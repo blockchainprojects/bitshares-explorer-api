@@ -388,26 +388,28 @@ def get_market_chart_data(base, quote):
     return data
 
 def get_top_proxies():
-    holders = _get_holders()
+    # this call is not correct. it does not account for open orders, cachback balances and margin positions
     
-    total_votes = reduce(lambda acc, h: acc + int(h['balance']), holders, 0)
+#    holders = _get_holders()
+#
+#     total_votes = reduce(lambda acc, h: acc + int(h['balance']), holders, 0)
+# 
+#     proxies = []
+#     for holder in holders:
+#         if 'follower_count' in holder:
+#             proxy_amount =  int(holder['balance']) + int(holder['follower_amount'])
+#             proxy_total_percentage = float(int(proxy_amount) * 100.0/ int(total_votes))
+#             proxies.append({
+#                 'id': holder['owner']['id'],
+#                 'name': holder['owner']['name'],
+#                 'bts_weight': proxy_amount,
+#                 'followers': holder['follower_count'],
+#                 'bts_weight_percentage': proxy_total_percentage
+#             })
+# 
+#     proxies = sorted(proxies, key=lambda k: -k['bts_weight']) # Reverse amount order
 
-    proxies = []
-    for holder in holders:
-        if 'follower_count' in holder:
-            proxy_amount =  int(holder['balance']) + int(holder['follower_amount'])
-            proxy_total_percentage = float(int(proxy_amount) * 100.0/ int(total_votes))
-            proxies.append({
-                'id': holder['owner']['id'],
-                'name': holder['owner']['name'],
-                'bts_weight': proxy_amount,
-                'followers': holder['follower_count'],
-                'bts_weight_percentage': proxy_total_percentage
-            })
-
-    proxies = sorted(proxies, key=lambda k: -k['bts_weight']) # Reverse amount order
-
-    return proxies
+    return []
 
 def _get_accounts_by_chunks_via_es(account_ids, chunk_size=1000):
     all_accounts = []
@@ -473,11 +475,9 @@ def _get_holders():
 
 def get_top_holders():
     holders = _get_holders()
-    # FIXME: Why without delegation???
-    holders_without_vote_delegation = [ holder for holder in holders if _get_voting_account(holder) == '1.2.5' ]
-    holders_without_vote_delegation.sort(key=lambda h : -int(h['balance']))
+    holders.sort(key=lambda h : -int(h['balance']))
     top_holders = []
-    for holder in holders_without_vote_delegation[:10]:
+    for holder in holders[:10]:
         top_holders.append({
             'account_id': holder['owner']['id'],
             'account_name': holder['owner']['name'],
